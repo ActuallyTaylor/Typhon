@@ -2,8 +2,11 @@ import { Monster } from './Classes/Monster.js';
 import { Sprite } from './Classes/Sprite.js'
 import { Map } from './Classes/Map.js'
 import { FightController, FightOption } from './Classes/FightController.js'
+import { Room } from './Classes/Room.js'
 
-let myMonster = new Monster();
+let myMonster = new Monster(0,0,0, 100);
+let myEnemy = new Monster(0,0,0, 100);
+let rooms = [new Room(new Monster(6,3,2,25)), new Room(new Monster(2,6,3,25)), new Room(new Monster(3,2,6,25))]
 
 let myMap = new Map();
 
@@ -20,138 +23,226 @@ let currentFightController
 
 let textStream = [];
 
-let currentRoom
+let primaryWindowWidth
+let primaryWindowHeight
+
+let characterHeight = 400
+let characterWidth = 400
+
+let myEnemyPosX
+let myEnemyPosY
+let myMonsterPosX
+let myMonsterPosY
+let fightSprites
+let energySprite
+
+let introKeyOne = false
+let introKeyTwo = false
+let introKeyThree = false
+let selectedMonster = 0
+
+let scene = 0; // 0: Main Menu, 1: Between Battles, 2: In Battle
 
 function preload() {
+    primaryWindowWidth = windowWidth
+    primaryWindowHeight = windowHeight
+    myEnemyPosX = windowWidth - characterWidth - 100
+    myEnemyPosY = windowHeight / 2 - characterHeight
 
+    myMonsterPosX =  100
+    myMonsterPosY = windowHeight / 2 - characterHeight
+
+    myMonster.sprite = new Sprite("./assets/character.png", myMonsterPosX, myMonsterPosY, characterHeight, characterWidth, false)
+    myEnemy.sprite = new Sprite("./assets/character.png", myEnemyPosX, myEnemyPosY, characterHeight, characterWidth, true)
+
+    energySprite = new Sprite("./assets/Energy_Icon.png", 0, 0, 100, 100);
+    
+    fightSprites = [new Sprite("./assets/AttackButton.png", 0, 0, 100, 100), new Sprite("./assets/ReloadButton.png", 0, 0, 100, 100), new Sprite("./assets/DefendButton.png", 0, 0, 100, 100)]
+
+    rooms[0].enemy.ability = 
 }
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
     myMap.generateMap(4, 4, 0, 0);
+    startFight(new Room(myEnemy))
+    startIntro()
+}
+
+function startIntro() {
+    textStream.push("You awake in dark room... What do you do?")
+    textStream.push("1: Get up and look around")
+    textStream.push("2: Go back to bed")
+    textStream.push("")
+    textStream.push("")
+}
+
+function finishIntro() {
+    introKeyTwo = true
+    textStream.push("")
+    textStream.push("")
+    textStream.push("You hear \“Take care of this creature to show your worth to the gods\” in your head")
+    textStream.push("")
+    if (selectedMonster == 0) {
+        myMonster.speed = 3
+        myMonster.strength = 2
+        myMonster.defense = 1
+    } else if (selectedMonster == 1) {
+        myMonster.speed = 2
+        myMonster.strength = 3
+        myMonster.defense = 1
+    } else if (selectedMonster == 2) {
+        myMonster.speed = 2
+        myMonster.strength = 1
+        myMonster.defense = 3
+    }
+
+    textStream.push("You see a door in front of you open, you hear in your head \"Please enter\"")
+    textStream.push("")
+    textStream.push("Do you enter? 1: Yes")
+    textStream.push("")
+    textStream.push("")
+}
+
+function keyPressed() {
+    if (scene == 0) {
+        if (key == "1") {
+            if(!introKeyOne) {
+                textStream.push("You find a tablet made of stone sitting in the corner of the cave...")
+                textStream.push("")
+                textStream.push("")
+                textStream.push("The tablet reads: \"You are alone and can only have one strength: Wisdom, Strength, or Constitution.\"")
+                textStream.push("What do you choose 1: Wisdom, 2: Strength, 3: Constitution")
+                textStream.push("")
+                textStream.push("")
+                introKeyOne = true
+            } else if (!introKeyTwo) {
+                selectedMonster = 0
+                textStream.push("You have selected Wisdom! A small mostly featherless owl appears in front of you.")
+                finishIntro()
+            } else if (!introKeyThree) {
+                scene = 2
+            }
+        }
+        if (key == "2") {
+            if(!introKeyOne) {
+                textStream.push("You go back to bed.")
+
+                // Reset Page
+                setTimeout(function () {
+                    location.reload()
+                }, 2000);            
+            } else if (!introKeyTwo) {
+                selectedMonster = 1
+                textStream.push("You have selected Wisdom! A small appears in front of you.")
+                finishIntro()
+            }
+        }
+        if (key == "3") {
+            if (!introKeyTwo) {
+                selectedMonster = 2
+                textStream.push("You have selected Constitution! A small dog appears in front of you.")
+                finishIntro()
+            }
+        }
+    } else if (scene == 2) {
+        if (key == 'r') {
+            endFight();
+        }
+        if (canAttack && ! didAttack) {
+            if (key == '1') {
+                currentFightController.selectFightOption(FightOption.Attack)
+                didAttack = true;
+            }
+            if (key == '2') {
+                currentFightController.selectFightOption(FightOption.Reload)
+                didAttack = true;
+            }
+            if (key == '3') {
+                currentFightController.selectFightOption(FightOption.Block)
+                didAttack = true;
+            }
+        }    
+    }
 }
 
 function draw() {
     background(112, 112, 112);
-    myMonster.draw()
-    if (myMap.rooms.length != 0) {
-        drawMap();
+    if (scene == 0) {
+        displayStream();
+    } else if (scene == 2) {
+        // if (myMap.rooms.length != 0) {
+        //     // drawMap();
+        // }
+        if (drawingRewards != null) {
+            drawRewards();
+        }
+        click(0,0,100000,100000);
+        if (inBattle) {
+            attackTimer += 1
+            drawAttack();
+        }
+        displayStream();
+        displayCharacters()
+        drawFightOptions();
     }
-    if (drawingRewards != null) {
-        drawRewards();
-    }
-    click(0,0,100000,100000);
-    if (inBattle) {
-        attackTimer += 1
-        drawAttack();
-    }
-    displayStream();
 }
 
-function mouseReleased() {
-    mouseDown = false;
-}
-
-function keyPressed() {
-    if (key == 'r') {
-        endFight();
-    }
-    if (canAttack && ! didAttack) {
-        if (key == '1') {
-            testFightController.selectFightOption(FightOption.Attack)
-        }
-        if (key == '2') {
-            testFightController.selectFightOption(FightOption.Reload)
-        }
-        if (key == '3') {
-            testFightController.selectFightOption(FightOption.Block)
-        }
-        if (key == '1' || key == '2' || key == '3') {
-            didAttack = true;
-            testFightController.advanceFight();
-        }
-    }
+function drawFightOptions() {
+    let spacer = 100
+    let buttonWidth = (primaryWindowWidth / 4) - 45
+    let buttonHeight = 60
+    let startFightOptionsX = ((primaryWindowWidth - (buttonWidth  * 3)) / 2) - spacer
     
-}
+    for(let i = 0; i < 3; i++) {
+        fightSprites[i].x = startFightOptionsX + (buttonWidth * i)
+        fightSprites[i].y = primaryWindowHeight - 120
+        fightSprites[i].width = buttonWidth
+        fightSprites[i].height = buttonHeight
 
-function displayStream() {
-    let startx = 200;
-    let starty = 10;
-    let h = 100;
-    let w = 100;
-    let messageHeight = 10;
-    let rev = textStream.reverse();
-    textSize(messageHeight-2);
-    for (let i = 0; i < Math.min(rev.length, h / messageHeight); i++) {
-        text(rev[i], startx, starty + h - (i+1) * messageHeight)
+        fightSprites[i].draw()
+        startFightOptionsX += spacer
     }
-}
-
-function keyReleased() {
-
-}
-
-function generateMap() {
-
-}
-
-function drawMap() {
-    let startx = 10;
-    let starty = 10;
-    let s = 20;
-    let rooms = myMap.rooms;
-    fill(0,255,0);
-    rect(startx, starty, rooms.length * s, rooms[0].length * s);
-    fill(255,0,0);
-    for (let c = 0; c < rooms.length; c++) {
-        for (let r = 0; r < rooms[c].length; r++) {
-            if (rooms[c][r] == null) {
-                continue;
-            }
-            rect(startx + s * c + 3, starty + s * r + 3, s - 6, s - 6);
-            if (rooms[c][r].N) {
-                rect(startx + s * c + s / 2 - 3, starty + s * r, 6, 3);
-            }
-            if (rooms[c][r].E) {
-                rect(startx + s * (c+1) - 3, starty + s * r + r / 2 - 3, 3, 6);
-            }
-            if (rooms[c][r].S) {
-                rect(startx + s * c + s / 2 - 3, starty + s * (r+1) - 3, 6, 3);
-            }
-            if (rooms[c][r].W) {
-                rect(startx + s * c, starty + s * r + r / 2 - 3, 3, 6);
-            }
-        }
-    }
-}
-
-function startFight(room) {
-    currentRoom = room
-    currentFightController = new FightController(myMonster, room.enemy)
-    displayCharacters(myMap, room.enemy)
 }
 
 function displayCharacters() {
-    
+    myEnemy.draw()
+    myMonster.draw()
+
+    let startx = 100;
+    let startx2 = 400;
+    let starty = 400;
+    let s = 30;
+    energySprite.x = startx;
+    energySprite.width = s;
+    energySprite.height = s;
+    for (let i = 0; i < myMonster.energy; i++) {
+        energySprite.y = starty - s * i;
+        energySprite.draw();
+    }
+    energySprite.x = startx2;
+    for (let i = 0; i < myEnemy.energy; i++) {
+        energySprite.y = starty - s * i;
+        energySprite.draw();
+    }
 }
 
-function endFight() {
-    // get random reward
-    // level up if needed
-    let showList = []
-    for (let i = 0; i < 2; i++){
-        let ignoreRandom = getRandomInt(0,3)
-        if (ignoreRandom == 0 && ! showList.includes('ATK')) {
-            showList.push('ATK')
-        }
-        if (ignoreRandom == 1 && ! showList.includes('ATK')) {
-            showList.push('DEF')
-        }
-        if (ignoreRandom == 2 && ! showList.includes('ATK')) {
-            showList.push('SPD')
-        }
+function displayStream() {
+    let h = 230;
+    let w = primaryWindowWidth;
+
+    let startx = 0;
+    let starty = primaryWindowHeight - h - 150;
+
+    let messageHeight = 20;
+    let rev = textStream.slice().reverse();
+    fill(150);
+    rect(startx, starty, w, h);
+    fill(0);
+    textSize(messageHeight-2);
+    for (let i = 0; i < Math.min(rev.length, h / messageHeight - 2); i++) {
+        text(rev[i], startx, starty + h - (i+1) * messageHeight)
     }
-    drawingRewards = showList
 }
 
 function drawRewards() {
@@ -187,6 +278,107 @@ function drawRewards() {
     }
 }
 
+// function drawMap() {
+//     let startx = 10;
+//     let starty = 10;
+//     let s = 20;
+//     let rooms = myMap.rooms;
+//     fill(0,255,0);
+//     rect(startx, starty, rooms.length * s, rooms[0].length * s);
+//     fill(255,0,0);
+//     for (let c = 0; c < rooms.length; c++) {
+//         for (let r = 0; r < rooms[c].length; r++) {
+//             if (rooms[c][r] == null) {
+//                 continue;
+//             }
+//             rect(startx + s * c + 3, starty + s * r + 3, s - 6, s - 6);
+//             if (rooms[c][r].N) {
+//                 rect(startx + s * c + s / 2 - 3, starty + s * r, 6, 3);
+//             }
+//             if (rooms[c][r].E) {
+//                 rect(startx + s * (c+1) - 3, starty + s * r + r / 2 - 3, 3, 6);
+//             }
+//             if (rooms[c][r].S) {
+//                 rect(startx + s * c + s / 2 - 3, starty + s * (r+1) - 3, 6, 3);
+//             }
+//             if (rooms[c][r].W) {
+//                 rect(startx + s * c, starty + s * r + r / 2 - 3, 3, 6);
+//             }
+//         }
+//     }
+// }
+
+function drawAttack() {
+    let x = primaryWindowWidth/2 - 300;
+    let y = 60;
+    let s = 40;
+    let w = 600;
+    scale = getResponseTime();
+
+    if (attackTimer > scale * 0.75) {
+        canAttack = true;
+        noStroke();
+        fill(0,200,0);
+        rect(x, y, w*(1-attackTimer/scale), s, s/4, 0, 0, s/4);
+        stroke(0);
+    }
+    else {
+        noStroke();
+        fill(0,200,0);
+        rect(x, y, w*.25, s, s/4, 0, 0, s/4);
+        fill(100,0,0);
+        rect(x+w*.25, y, w*(.75-attackTimer/scale), s);
+        stroke(0);
+    }
+    
+    if (attackTimer >= scale) {
+        if (! didAttack) {
+            currentFightController.selectFightOption(FightOption.Pass);
+        }
+        let newMessages = currentFightController.advanceFight();
+        for (let i = 0; i < newMessages.length; i++) {
+            textStream.push(newMessages[i]);
+        }
+        attackTimer = 0;
+        canAttack = false;
+        didAttack = false;
+    }
+    noFill();
+    strokeWeight(5);
+    rect(x-2, y-2, w+4, s+4, s/4);
+    strokeWeight(1);
+}
+
+
+// MARK: Logic Functions
+function generateMap() {
+
+}
+
+function startFight(room) {
+    myEnemy = room.enemy
+    currentFightController = new FightController(myMonster, myEnemy)
+}
+
+function endFight() {
+    // get random reward
+    // level up if needed
+    let showList = []
+    for (let i = 0; i < 2; i++){
+        let ignoreRandom = getRandomInt(0,3)
+        if (ignoreRandom == 0 && ! showList.includes('ATK')) {
+            showList.push('ATK')
+        }
+        if (ignoreRandom == 1 && ! showList.includes('ATK')) {
+            showList.push('DEF')
+        }
+        if (ignoreRandom == 2 && ! showList.includes('ATK')) {
+            showList.push('SPD')
+        }
+    }
+    drawingRewards = showList
+}
+
 function getRewards(reward) {
     if (reward == 'ATK') {
         myMonster.attack ++;
@@ -220,32 +412,15 @@ function getRandomInt(min, max) {
 }
 
 function getResponseTime() {
-    return Math.sqrt(Math.max(myMonster.speed - 2*myEnemy.speed + 40, 1)) * 50;
+    return Math.sqrt(Math.max(myMonster.speedFunc() - 2* myEnemy.speedFunc()  + 40, 1)) * 30;
 }
 
-function drawAttack() {
-    let x = 100;
-    let y = 100;
-    let s = 30;
-    scale = getResponseTime();
-    if (attackTimer > scale * 0.25 && attackTimer < scale * 0.25 + 15) {
-        fill(0,0,255);
-        rect(x, y, s, s);
-    }
-    if (attackTimer > scale * 0.5 && attackTimer < scale * 0.5 + 15) {
-        fill(0,0,255);
-        rect(x, y, s, s);
-    }
-    if (attackTimer > scale * 0.75 && attackTimer < scale) {
-        canAttack = true;
-        fill(0,255,0);
-        rect(x, y, s, s);
-    }
-    if (attackTimer >= scale) {
-        attackTimer = 0;
-        canAttack = false;
-        didAttack = false;
-    }
+function keyReleased() {
+
+}
+
+function mouseReleased() {
+    mouseDown = false;
 }
 
 window.setup = setup

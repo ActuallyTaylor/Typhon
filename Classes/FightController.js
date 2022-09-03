@@ -12,9 +12,11 @@ export class FightController {
         this.opponent = monsterTwo
         this.personalFightOption = FightOption.Pass
         this.opponentFightOption = FightOption.Pass
+
+        this.turnCount = 1;
         
-        this.opponentEnergyLevel = 1 + this.opponent.ability.energyStartIncrease
-        this.personalEnergyLevel = 1 + this.self.ability.energyStartIncrease
+        this.opponent.energy = 1 + this.opponent.ability.energyStartIncrease
+        this.self.energy = 1 + this.self.ability.energyStartIncrease
     }
 
     selectFightOption(option) {
@@ -24,32 +26,32 @@ export class FightController {
 
     // Uses a BASIC AF ai to select fight options
     aiSelectFightOption() { 
-        blockCounter = 0
-        attackCounter = 0
-        reloadCounter = 0
+        let blockCounter = 0
+        let attackCounter = 0
+        let reloadCounter = 0
 
         // MARK: Increasing Reload Counter
-        if (this.opponentEnergyLevel <= 0) {
+        if (this.opponent.energy <= 0) {
             reloadCounter += 10
-        } else if (this.opponentEnergyLevel <= 1) {
-            reloadCount += 5
-        } else if (this.opponentEnergyLevel <= 5) {
+        } else if (this.opponent.energy <= 1) {
+            reloadCounter += 5
+        } else if (this.opponent.energy <= 5) {
             reloadCounter + 1
         }
 
-        if (this.personalEnergyLevel > 2) {
+        if (this.self.energy > 2) {
             reloadCounter -= 3
         }
 
         // MARK: Increasing Attack Counter
-        if (this.opponentEnergyLevel <= 0) {
+        if (this.opponent.energy <= 0) {
             attackCounter -= 10
         }
 
         // Check to see if the main characters energy level is low, if so we want to attack because they will reload 
-        if(this.personalEnergyLevel <= 0) {
+        if(this.self.energy <= 0) {
             attackCounter += 10
-        } else if (this.personalEnergyLevel <= 2) {
+        } else if (this.self.energy <= 2) {
             attackCounter += 5
         } else {
             attackCounter += 3
@@ -59,7 +61,7 @@ export class FightController {
         if(this.opponent.health < 25) {
             blockCounter += 8
         } else {
-            this.blockCounter += 2
+            blockCounter += 2
         }
 
         if (attackCounter >= blockCounter && attackCounter >= reloadCounter) {
@@ -72,38 +74,72 @@ export class FightController {
     }
 
     advanceFight() {
-        if(this.personalFightOption == FightOption.Attack && (this.opponentFightOption != FightOption.Block || this.self.ability.hasPiercing())) {
-            console.log("Attack Opponent")
-            if (this.personalEnergyLevel >= 1) {
-                this.opponent.health -= this.opponent.attack
+        console.log(this.self, this.opponent);
+        let resultStrings = [];
+        resultStrings.push(`-- TURN ${this.turnCount} --`);
+        if(this.personalFightOption == FightOption.Attack) {
+            if (this.self.energy >= 1) {
+                this.self.energy -= 1;
+                resultStrings.push("Your monster attacked")
+                let damage = 0;
+                if (this.opponentFightOption == FightOption.Block) {
+                    if (this.self.ability.hasPiercing()) {
+                        resultStrings.push("Your enemy blocked, but the attack pierced");
+                        damage = this.self.attackFunc();
+                    }
+                    else {
+                        resultStrings.push("Your enemy blocked")
+                        damage = Math.max(this.self.attackFunc() - this.opponent.defenseFunc(),0);
+                    }
+                }
+                else{
+                    damage = this.self.attackFunc();
+                }
+                this.opponent.health -= damage;
+                resultStrings.push(`Your enemy took ${damage} damage`);
+            }
+            else {
+                resultStrings.push("You tried to attack, but your monster is too exhausted")
             }
         } else if(this.personalFightOption == FightOption.Reload) {
-            this.personalEnergyLevel += this.self.ability.energyIncreaseChange
+            this.self.energy +=  1 + this.self.ability.energyIncreaseChange
+            resultStrings.push(`Your monster gained ${1 + this.self.ability.energyIncreaseChange} energy`)
         }
-        if (this.opponentFightOption == FightOption.Attack && (this.personalEnergyLevel != FightOption.Block || this.opponent.ability.hasPiercing())) {
-            console.log("Opponent Attacks")
-            if (this.opponentEnergyLevel >= 1) {
-                this.opponent.health -= this.self.attack
+
+        if (this.opponentFightOption == FightOption.Attack) {
+            if (this.opponent.energy >= 1) {
+                this.opponent.energy -= 1;
+                resultStrings.push("Your enemy attacked")
+                let damage = 0;
+                if (this.personalFightOption == FightOption.Block) {
+                    if (this.opponent.ability.hasPiercing()) {
+                        resultStrings.push("Your monster blocked, but the attack pierced");
+                        damage = this.opponent.attackFunc();
+                    }
+                    else {
+                        resultStrings.push("Your monster blocked")
+                        damage = Math.max(this.opponent.attackFunc() - this.self.defenseFunc(),0);
+                    }
+                }
+                else{
+                    damage = this.opponent.attackFunc();
+                }
+                this.self.health -= damage;
+                resultStrings.push(`Your monster took ${damage} damage`);
+            }
+            else {
+                resultStrings.push("The AI tried to attack without energy, but it wasn't supposed to. It has become sentient. Run.")
             }
         } else if(this.opponentFightOption == FightOption.Reload) {
-            this.opponentEnergyLevel += this.opponent.ability.energyIncreaseChange
+            this.opponent.energy += 1 + this.opponent.ability.energyIncreaseChange
+            resultStrings.push(`Your enemy gained ${1 + this.self.ability.energyIncreaseChange} energy`)
         }
     
-        this.opponentEnergyLevel -= 1
-        this.personalEnergyLevel -= 1
-    
-        this.clampEnergy()
-
         console.log(this.self.health, this.opponent.health)
-    }
-
-    clampEnergy() {
-        if (this.opponentEnergyLevel < 0) {
-            this.opponentEnergyLevel = 0
+        this.turnCount ++;
+        if (resultStrings.length == 1) {
+            resultStrings.push("You stare at eachother awkardly.")
         }
-        
-        if (this.personalEnergyLevel < 0) {
-            this.personalEnergyLevel = 0
-        }
+        return resultStrings;
     }
 }

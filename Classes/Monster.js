@@ -1,13 +1,13 @@
-import { Ability, HarpyAbility } from "./Ability.js"
+import { Ability } from "./Ability.js"
 
 export class Monster {
     // Holds info about the character, their upgrades, etc.
-    constructor() {
+    constructor(attack, defense, speed, health) {
         this.sprite = null;
         this.type = null;
 
         // MARK: Attack
-        this.attack = 10 ;
+        this.attack = 0;
 
         // MARK: Defense
         this.defense = 0;
@@ -21,12 +21,15 @@ export class Monster {
         // MARK: Level
         this.lvl = 0;
 
+        // MARK: Energy
+        this.energy = 0
+
         // MARK: Abilities
-        this.ability = new HarpyAbility()
+        this.ability = new Ability()
     }
 
     draw() {
-        // this.sprite.draw()
+        this.sprite.draw()
     }
 
     checkLevelUp() {
@@ -36,12 +39,16 @@ export class Monster {
         }
     }
 
-    getAttackDamage() {
-        return 10 + 2 * this.attack;
+    attackFunc() {
+        return 10 + Math.round((2+Math.random()) * (this.attack + this.ability.attackChange));
     }
 
-    getDefenseAmount() {
-        return 5 + 2 * this.defense;
+    defenseFunc() {
+        return 10 + 2 * (this.defense + this.ability.defenseChange);
+    }
+
+    speedFunc() {
+        return (this.speed + this.ability.speedChange)
     }
 }
 

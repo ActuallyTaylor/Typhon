@@ -8,29 +8,31 @@ export class Ability {
         this.energyStartIncrease = 0
         this.energyIncreaseChange = 0
 
-        this.piercingChance = 0.25
+        this.piercingChance = 0.05
     }
 
     hasPiercing() {
         return Math.random() < this.piercingChance
     }
+}
 
-    effectMonster(monster) {
-        monster.attack += this.attackChange
-        monster.speed += this.speedChange
-        monster.defense += this.defenseChange
-    }
-
-    removeFromMonster(monster) {
-        monster.attack -= this.attackChange
-        monster.speed -= this.speedChange
-        monster.defense -= this.defenseChange
+export class StrixAbiltiy extends Ability {
+    constructor() {
+        super()
+        this.speedChange += 1
     }
 }
 
-export class HarpyAbility extends Ability {
+export class PythonAbiltiy extends Ability {
     constructor() {
         super()
-        this.energyStartIncrease = 5
+        this.attackChange += 1
+    }
+}
+
+export class WolfAbiltiy extends Ability {
+    constructor() {
+        super()
+        this.defenseChange += 1
     }
 }
