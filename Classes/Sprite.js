@@ -8,13 +8,13 @@ export class Sprite {
         this.width = width;
         this.height = height;
         this.image = loadImage(assetURL);
-        this.image.resize(this.width, this.height);
+        //this.image.resize(this.width, this.height);
         this.flipped = flipped
     }
 
     draw() {
-        this.image.resize(this.width, this.height);
-        image(this.image, this.x, this.y);
+        //this.image.resize(this.width, this.height);
+        image(this.image, this.x, this.y, this.width, this.height);
     }
 }
 

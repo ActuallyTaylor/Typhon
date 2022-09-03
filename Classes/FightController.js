@@ -45,7 +45,7 @@ export class FightController {
 
         // MARK: Increasing Attack Counter
         if (this.opponent.energy <= 0) {
-            attackCounter -= 10
+            attackCounter -= 50
         }
 
         // Check to see if the main characters energy level is low, if so we want to attack because they will reload 
@@ -63,6 +63,10 @@ export class FightController {
         } else {
             blockCounter += 2
         }
+
+        reloadCounter += 5*Math.random()
+        attackCounter += 5*Math.random()
+        blockCounter += 5*Math.random()
 
         if (attackCounter >= blockCounter && attackCounter >= reloadCounter) {
             this.opponentFightOption = FightOption.Attack
@@ -104,6 +108,9 @@ export class FightController {
         } else if(this.personalFightOption == FightOption.Reload) {
             this.self.energy +=  1 + this.self.ability.energyIncreaseChange
             resultStrings.push(`Your monster gained ${1 + this.self.ability.energyIncreaseChange} energy`)
+            if (this.opponentFightOption == FightOption.Block) {
+                resultStrings.push("Your enemy blocked")
+            }
         }
 
         if (this.opponentFightOption == FightOption.Attack) {
@@ -133,13 +140,29 @@ export class FightController {
         } else if(this.opponentFightOption == FightOption.Reload) {
             this.opponent.energy += 1 + this.opponent.ability.energyIncreaseChange
             resultStrings.push(`Your enemy gained ${1 + this.self.ability.energyIncreaseChange} energy`)
+            if (this.personalFightOption == FightOption.Block) {
+                resultStrings.push("Your monster blocked")
+            }
         }
     
         console.log(this.self.health, this.opponent.health)
         this.turnCount ++;
         if (resultStrings.length == 1) {
-            resultStrings.push("You stare at eachother awkardly.")
+            if (this.personalFightOption == FightOption.Block) {
+                resultStrings.push("Your monster blocked")
+            }
+            if (this.opponentFightOption == FightOption.Block) {
+                resultStrings.push("Your enemy blocked")
+            }
+            resultStrings.push("You stare at eachother awkardly")
         }
-        return resultStrings;
+
+        if(this.self.health <= 0) {
+            return "selfDeath";
+        } else if (this.opponent.health <= 0) {
+            return "opponentDeath"
+        } else {
+            return resultStrings;
+        }
     }
 }

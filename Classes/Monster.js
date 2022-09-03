@@ -1,4 +1,5 @@
 import { Ability } from "./Ability.js"
+import { Sprite } from "./Sprite.js"
 
 export class Monster {
     // Holds info about the character, their upgrades, etc.
@@ -7,16 +8,18 @@ export class Monster {
         this.type = null;
 
         // MARK: Attack
-        this.attack = 0;
+        this.attack = attack;
 
         // MARK: Defense
-        this.defense = 0;
+        this.defense = defense;
 
         // MARK: Speed
-        this.speed = 0;
+        this.speed = speed;
 
         // MARK: Health
-        this.health = 100;
+        this.health = health;
+
+        this.maxhp = health;
 
         // MARK: Level
         this.lvl = 0;
