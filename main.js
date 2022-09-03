@@ -411,10 +411,6 @@ function drawAttack() {
         if (newMessages == "selfDeath") {
             didEnd = true;
             textStream.push("Your monster died, the gods look down against you.")
-            
-            setTimeout(function () {
-                location.reload()
-            }, 2000);            
         } else if(newMessages == "opponentDeath") {
             didEnd = true;
             textStream.push("You killed your opponent! Congratulations.")
