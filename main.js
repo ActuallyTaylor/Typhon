@@ -112,11 +112,11 @@ function startIntro() {
     textStream.push("2: Go back to bed")
     textStream.push("")
     textStream.push("")
+    textStream.push("")
 }
 
 function finishIntro() {
     introKeyTwo = true
-    textStream.push("")
     textStream.push("")
     textStream.push("You hear \“Take care of this creature to show your worth to the gods\” in your head")
     textStream.push("")
@@ -136,8 +136,8 @@ function keyPressed() {
             if(!introKeyOne) {
                 textStream.push("You find a tablet made of stone sitting in the corner of the cave...")
                 textStream.push("")
-                textStream.push("")
                 textStream.push("The tablet reads: \"You are alone and can only have one strength: Wisdom, Strength, or Constitution.\"")
+                textStream.push("")
                 textStream.push("What do you choose 1: Wisdom, 2: Strength, 3: Constitution")
                 textStream.push("")
                 textStream.push("")
@@ -411,8 +411,10 @@ function drawAttack() {
         if (newMessages == "selfDeath") {
             didEnd = true;
             textStream.push("Your monster died, the gods look down against you.")
-            endFight()
-
+            
+            setTimeout(function () {
+                location.reload()
+            }, 2000);            
         } else if(newMessages == "opponentDeath") {
             didEnd = true;
             textStream.push("You killed your opponent! Congratulations.")
@@ -464,6 +466,7 @@ function endFight() {
     }
 
     drawingRewards = showList
+    attackTimer = 0
     scene = 1
 }
 
