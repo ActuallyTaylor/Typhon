@@ -3,3 +3,6 @@ A game about growing a creature you have been given to by the Greek gods by figh
 
 # Check out the game hosted
 https://typhon-hackathon.netlify.app
+
+# Check out the devpost
+https://devpost.com/software/typhon
